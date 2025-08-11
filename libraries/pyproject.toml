@@ -1,0 +1,26 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "coachkata-libraries"
+version = "0.1.0"
+description = "Shared libraries for Coach Kata"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "pydantic>=2.0.0",
+    "loguru>=0.7.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "black>=23.0.0",
+    "isort>=5.0.0",
+    "flake8>=6.0.0",
+    "mypy>=1.0.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/coachkata_libraries"] 

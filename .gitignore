@@ -1,0 +1,66 @@
+# macOS
+.DS_Store
+
+uv.lock
+
+# IDE
+.idea/
+
+# Coverage reports
+.coverage
+coverage.xml
+
+# Virtual environments
+.venv/
+
+# Build artifacts
+build/
+dist/
+wheels/
+*.egg-info/
+
+# Generated files
+generated/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Additional Python patterns
+*.so
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# pytest
+.pytest_cache/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# ruff
+.ruff_cache/
+
+# Protocol Buffers
+*.pb.py
+*_pb2.py
+*_pb2_grpc.py
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp 
