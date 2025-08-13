@@ -11,7 +11,7 @@ import grpc
 from grpc import aio
 
 # Import the generated protobuf code
-from ..generated import (
+from generated import (
     inference_director_pb2,  # type: ignore
     inference_director_pb2_grpc,  # type: ignore
 )

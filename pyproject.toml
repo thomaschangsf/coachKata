@@ -108,7 +108,7 @@ exclude = [
 
 [tool.poe.tasks]
 generate-code-from-protos = "python scripts/generate_proto.py"
-run-inference-server = "cd services/inference && uv run python app/main.py"
+run-inference-server = "bash -c 'cd services/inference && uv run python app/main.py'"
 check = "bash -c 'uv run ruff check --fix . && uv run pyright . && uv run pytest && uv run deptry .'"
 
 [dependency-groups]

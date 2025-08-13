@@ -63,7 +63,7 @@ async def get_health_status() -> HealthStatusResponse:
             raise HTTPException(status_code=503, detail="gRPC server not available")
 
         # Create a mock request and context for the gRPC call
-        from ..generated import inference_director_pb2  # type: ignore
+        from generated import inference_director_pb2  # type: ignore
 
         # Call the gRPC method directly
         request = inference_director_pb2.GetHealthStatusRequest()  # type: ignore
@@ -103,7 +103,7 @@ async def set_health_status(request: HealthStatusRequest) -> HealthStatusRespons
 
         # For now, just return the current status
         # In a real implementation, you might want to add a way to set the status
-        from ..generated import inference_director_pb2  # type: ignore
+        from generated import inference_director_pb2  # type: ignore
 
         request_pb = inference_director_pb2.GetHealthStatusRequest()  # type: ignore
         response = servicer.GetHealthStatus(request_pb, None)
