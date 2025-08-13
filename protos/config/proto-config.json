@@ -1,0 +1,4 @@
+{
+  "local_proto_path": "protos",
+  "local_generated_path": "services/inference/app/generated"
+} 

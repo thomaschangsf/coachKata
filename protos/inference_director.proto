@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package inference_director;
+
+// Service definition for inference director
+service InferenceDirector {
+  // Get the health status of the inference director
+  rpc GetHealthStatus(GetHealthStatusRequest) returns (HealthStatusResponse);
+}
+
+// Request message for getting health status
+message GetHealthStatusRequest {
+  // Empty request - no parameters needed
+}
+
+// Response message containing health status
+message HealthStatusResponse {
+  // Overall health status of the inference director
+  HealthStatus overall_status = 1;
+}
+
+// Enum defining possible health statuses
+enum HealthStatus {
+  // Default unspecified status
+  HEALTH_STATUS_UNSPECIFIED = 0;
+  
+  // Service is healthy and functioning normally
+  HEALTH_STATUS_HEALTHY = 1;
+  
+  // Service is unhealthy or experiencing issues
+  HEALTH_STATUS_UNHEALTHY = 2;
+} 

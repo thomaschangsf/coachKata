@@ -5,7 +5,10 @@ description = "Coach Kata Monorepo Workspace"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+    "betterproto>=1.2.5",
+    "grpcio-tools>=1.62.3",
     "observe",
+    "poethepoet>=0.36.0",
 ]
 
 [tool.uv.workspace]
@@ -23,10 +26,8 @@ dev = [
     "betterproto2-compiler",
     "deptry",
     "grpc-requests",
-    "grpcio-tools",
     "hatchling",
     "httpx",
-    "poethepoet",
     "pyright",
     "pytest-asyncio",
     "pytest-cov",
@@ -37,6 +38,15 @@ dev = [
 [tool.ruff]
 target-version = "py311"
 line-length = 88
+exclude = [
+    "**/generated/**",
+    "**/node_modules/**",
+    "**/.venv/**",
+    "**/build/**",
+    "**/dist/**"
+]
+
+[tool.ruff.lint]
 select = [
     "E",  # pycodestyle errors
     "W",  # pycodestyle warnings
@@ -51,10 +61,60 @@ ignore = [
     "B008",  # do not perform function calls in argument defaults
 ]
 
-[tool.ruff.isort]
+[tool.ruff.lint.isort]
 known-first-party = ["coachkata"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests", "libraries"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "--disable-warnings",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+]
+norecursedirs = [
+    ".venv",
+    "build",
+    "dist",
+    "**/generated",
+    "node_modules",
+]
+
+
+[tool.deptry]
+ignore = [
+    "**/generated/**",
+    "**/node_modules/**",
+    "**/.venv/**",
+    "**/build/**",
+    "**/dist/**"
+]
 
 [tool.pyright]
 pythonVersion = "3.11"
 pythonPlatform = "Darwin"
 typeCheckingMode = "strict"
+exclude = [
+    "**/generated/**",
+    "**/node_modules/**",
+    "**/.venv/**"
+]
+
+[tool.poe.tasks]
+generate-code-from-protos = "python scripts/generate_proto.py"
+run-inference-server = "cd services/inference && uv run python app/main.py"
+check = "bash -c 'uv run ruff check --fix . && uv run pyright . && uv run pytest && uv run deptry .'"
+
+[dependency-groups]
+dev = [
+    "deptry>=0.23.1",
+    "pyright>=1.1.403",
+    "pytest>=8.4.1",
+    "ruff>=0.9.10",
+]
