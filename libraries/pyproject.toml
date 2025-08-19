@@ -23,4 +23,4 @@ dev = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/coachkata_libraries"] 
+packages = ["src/coackata"] 

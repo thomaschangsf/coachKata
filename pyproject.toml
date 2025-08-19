@@ -8,7 +8,12 @@ dependencies = [
     "betterproto>=1.2.5",
     "grpcio-tools>=1.62.3",
     "observe",
+    "onnx>=1.18.0",
+    "onnxruntime>=1.22.1",
     "poethepoet>=0.36.0",
+    "psutil>=7.0.0",
+    "torch>=2.8.0",
+    "transformers>=4.55.2",
 ]
 
 [tool.uv.workspace]
@@ -33,6 +38,18 @@ dev = [
     "pytest-cov",
     "pytest>=7.0.0",
     "ruff",
+    "jupyter",
+    "notebook",
+    "ipykernel",
+    "matplotlib",
+    "pandas",
+    "numpy",
+    "mediapipe",
+    "opencv-python",
+    "scikit-image",
+    "onnxruntime>=1.15.0",
+    "transformers>=4.30.0",
+    "torch>=2.0.0",
 ]
 
 [tool.ruff]
@@ -110,10 +127,14 @@ exclude = [
 generate-code-from-protos = "python scripts/generate_proto.py"
 run-inference-server = "bash -c 'cd services/inference && uv run python app/main.py'"
 check = "bash -c 'uv run ruff check --fix . && uv run pyright . && uv run pytest && uv run deptry .'"
+jupyter = "uv run jupyter notebook"
+jupyter-lab = "uv run jupyter lab"
+compare-poses = "cd libraries && uv run python src/coackata/compare_image.py"
 
 [dependency-groups]
 dev = [
     "deptry>=0.23.1",
+    "ipykernel>=6.30.1",
     "pyright>=1.1.403",
     "pytest>=8.4.1",
     "ruff>=0.9.10",

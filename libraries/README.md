@@ -13,5 +13,5 @@ uv add coachkata-libraries
 ## Usage
 
 ```python
-from coachkata_libraries import utils
+from coackata import utils
 ``` 
