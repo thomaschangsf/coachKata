@@ -52,7 +52,7 @@ uv run python -m ipykernel install --user --name=coachkata --display-name="Coach
 
 # Start notebook
 uv run poe jupyter
-uv run jupyter notebook
+# uv run jupyter notebook
 
 # ----------------------------------------
 # WIP

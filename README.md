@@ -17,6 +17,11 @@ coachKata/
 ```
 
 ## Prerequisites
+- Cursor rules
+    * ln -s ~/.cursorrules ./cursor-rules.json
+    * ln -s ~/.cursor/assists.json ./.cursor/assists.json
+
+
 
 - Python 3.11 or higher
 - `uv` package manager
