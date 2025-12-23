@@ -19,7 +19,7 @@ class HumanDetector:
                     device = "cpu"
             except (AssertionError, RuntimeError):
                 device = "cpu"
-        
+
         # Validate device
         if device == "cuda":
             try:
@@ -29,7 +29,7 @@ class HumanDetector:
             except (AssertionError, RuntimeError):
                 print("Warning: PyTorch not compiled with CUDA support, falling back to CPU")
                 device = "cpu"
-        
+
         self.device = device
 
         if name == "vitdet":
@@ -46,9 +46,9 @@ class HumanDetector:
                 self.detector = self.detector.to(self.device)
             self.detector.eval()
         elif name == "sam3":
-            from sam3.model_builder import build_sam3_image_model
             from sam3.model.sam3_image_processor import Sam3Processor
-            
+            from sam3.model_builder import build_sam3_image_model
+
             self.detector = build_sam3_image_model()
             self.processor = Sam3Processor(self.detector)
             self.detector_func = lambda detector, img, **kwargs: self.sam3_run(
@@ -56,9 +56,9 @@ class HumanDetector:
             )
         else:
             raise NotImplementedError
-        
+
     def sam3_run(self, img, det_cat_id: int = 0, bbox_thr: float = 0.5, **kwargs):
-        # switch bgr to rgb 
+        # switch bgr to rgb
         img = img[:, :, ::-1].copy()
         img = Image.fromarray(img.astype('uint8'), 'RGB')
         inference_state = self.processor.set_image(img)
@@ -67,10 +67,10 @@ class HumanDetector:
 
         # Get the masks, bounding boxes, and scores
         masks, boxes, scores = output["masks"], output["boxes"], output["scores"]
-        
+
         confident_idx = scores > bbox_thr
         boxes = boxes[confident_idx].cpu().numpy()
-        
+
         # resize the box with a scale factor 1.2
         scale = 1.2
         enlarged_boxes = []
@@ -100,7 +100,7 @@ def load_detectron2_vitdet(path=""):
     Checkpoint is automatically downloaded from the hardcoded URL.
     """
     from detectron2.checkpoint import DetectionCheckpointer
-    from detectron2.config import instantiate, LazyConfig
+    from detectron2.config import LazyConfig, instantiate
 
     # Get config file from tools directory (same folder as this file)
     cfg_path = Path(__file__).parent / "cascade_mask_rcnn_vitdet_h_75ep.py"
@@ -145,7 +145,7 @@ def run_detectron2_vitdet(
     img_transformed = torch.as_tensor(
         img_transformed.astype("float32").transpose(2, 0, 1)
     )
-    
+
     # Move input to the same device as the detector
     if device is None:
         # Try to get device from detector
@@ -153,7 +153,7 @@ def run_detectron2_vitdet(
             device = next(detector.parameters()).device
         except:
             device = torch.device("cpu")
-    
+
     img_transformed = img_transformed.to(device)
     inputs = {"image": img_transformed, "height": height, "width": width}
 

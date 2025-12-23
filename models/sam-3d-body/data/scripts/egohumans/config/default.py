@@ -1,9 +1,5 @@
 # Copyright (c) Meta Platforms, Inc. and affiliates.
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
 
-import os
 
 from yacs.config import CfgNode as CN
 

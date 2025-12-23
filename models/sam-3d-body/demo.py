@@ -15,8 +15,8 @@ root = pyrootutils.setup_root(
 import cv2
 import numpy as np
 import torch
-from sam_3d_body import load_sam_3d_body, SAM3DBodyEstimator
-from tools.vis_utils import visualize_sample, visualize_sample_together
+from sam_3d_body import SAM3DBodyEstimator, load_sam_3d_body
+from tools.vis_utils import visualize_sample_together
 from tqdm import tqdm
 
 
@@ -47,7 +47,7 @@ def main(args):
         human_detector = HumanDetector(
             name=args.detector_name, device=device, path=detector_path
         )
-    
+
     if (args.segmentor_name == "sam2" and len(segmentor_path)) or args.segmentor_name != "sam2":
         from tools.build_sam import HumanSegmentor
 

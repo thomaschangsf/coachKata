@@ -1,9 +1,9 @@
 # Copyright (c) Meta Platforms, Inc. and affiliates.
-import numpy as np
 import cv2
+import numpy as np
+from sam_3d_body.metadata.mhr70 import pose_info as mhr70_pose_info
 from sam_3d_body.visualization.renderer import Renderer
 from sam_3d_body.visualization.skeleton_visualizer import SkeletonVisualizer
-from sam_3d_body.metadata.mhr70 import pose_info as mhr70_pose_info
 
 LIGHT_BLUE = (0.65098039, 0.74117647, 0.85882353)
 
@@ -120,7 +120,7 @@ def visualize_sample_together(img_cv2, outputs, faces):
     # Pull out a fake translation; take the closest two
     fake_pred_cam_t = (np.max(all_pred_vertices[-2*18439:], axis=0) + np.min(all_pred_vertices[-2*18439:], axis=0)) / 2
     all_pred_vertices = all_pred_vertices - fake_pred_cam_t
-    
+
     # Render front view
     renderer = Renderer(focal_length=person_output["focal_length"], faces=all_faces)
     img_mesh = (

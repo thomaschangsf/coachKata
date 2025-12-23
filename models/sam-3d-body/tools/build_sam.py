@@ -1,7 +1,7 @@
 # Copyright (c) Meta Platforms, Inc. and affiliates.
 
-import torch
 import numpy as np
+import torch
 from PIL import Image
 
 
@@ -19,10 +19,10 @@ class HumanSegmentor:
             self.sam_func = run_sam3
         else:
             raise NotImplementedError
-    
+
     def run_sam(self, img, boxes, **kwargs):
         return self.sam_func(self.sam, img, boxes)
-        
+
 
 def load_sam2(device, path):
     checkpoint = f"{path}/checkpoints/sam2.1_hiera_large.pt"
@@ -40,9 +40,9 @@ def load_sam2(device, path):
 
 
 def load_sam3(device, path):
-    from sam3.model_builder import build_sam3_image_model
     from sam3.model.sam3_image_processor import Sam3Processor
-    
+    from sam3.model_builder import build_sam3_image_model
+
     model = build_sam3_image_model()
     predictor = Sam3Processor(model)
     return predictor
@@ -78,7 +78,7 @@ def run_sam2(sam_predictor, img, boxes):
 
 
 def run_sam3(sam_predictor, img, boxes):
-    # switch bgr to rgb 
+    # switch bgr to rgb
     img = img[:, :, ::-1].copy()
     img = Image.fromarray(img.astype('uint8'), 'RGB')
     inference_state = sam_predictor.set_image(img)

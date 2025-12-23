@@ -4,7 +4,7 @@ Utility functions for SAM 3D Body demo notebook
 
 import os
 import platform
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 # Fix for macOS: Set OpenGL platform before importing pyrender
 # EGL doesn't work on macOS, so we need to use a different backend
@@ -18,8 +18,7 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
-
-from sam_3d_body import load_sam_3d_body_hf, SAM3DBodyEstimator
+from sam_3d_body import SAM3DBodyEstimator, load_sam_3d_body_hf
 from sam_3d_body.metadata.mhr70 import pose_info as mhr70_pose_info
 from sam_3d_body.visualization.renderer import Renderer
 from sam_3d_body.visualization.skeleton_visualizer import SkeletonVisualizer
@@ -78,7 +77,7 @@ def setup_sam_3d_body(
         except (AssertionError, RuntimeError):
             print("Warning: PyTorch not compiled with CUDA support, falling back to CPU")
             device = "cpu"
-    
+
     print(f"Using device: {device}")
 
     # Load core model from HuggingFace
@@ -127,7 +126,7 @@ def setup_sam_3d_body(
         fov_estimator=fov_estimator,
     )
 
-    print(f"Setup complete!")
+    print("Setup complete!")
     print(
         f"  Human detector: {'✓' if human_detector else '✗ (will use full image or manual bbox)'}"
     )
@@ -147,8 +146,8 @@ def setup_visualizer():
 
 
 def visualize_2d_results(
-    img_cv2: np.ndarray, outputs: List[Dict[str, Any]], visualizer: SkeletonVisualizer
-) -> List[np.ndarray]:
+    img_cv2: np.ndarray, outputs: list[dict[str, Any]], visualizer: SkeletonVisualizer
+) -> list[np.ndarray]:
     """Visualize 2D keypoints and bounding boxes"""
     results = []
 
@@ -189,8 +188,8 @@ def visualize_2d_results(
 
 
 def visualize_3d_mesh(
-    img_cv2: np.ndarray, outputs: List[Dict[str, Any]], faces: np.ndarray
-) -> List[np.ndarray]:
+    img_cv2: np.ndarray, outputs: list[dict[str, Any]], faces: np.ndarray
+) -> list[np.ndarray]:
     """Visualize 3D mesh overlaid on image and side view"""
     results = []
 
@@ -250,11 +249,11 @@ def visualize_3d_mesh(
 
 def save_mesh_results(
     img_cv2: np.ndarray,
-    outputs: List[Dict[str, Any]],
+    outputs: list[dict[str, Any]],
     faces: np.ndarray,
     save_dir: str,
     image_name: str,
-) -> List[str]:
+) -> list[str]:
     """Save 3D mesh results to files and return PLY file paths"""
     import json
 
@@ -318,7 +317,7 @@ def save_mesh_results(
 
 
 def display_results_grid(
-    images: List[np.ndarray], titles: List[str], figsize_per_image: tuple = (6, 6)
+    images: list[np.ndarray], titles: list[str], figsize_per_image: tuple = (6, 6)
 ):
     """Display multiple images in a grid"""
     n_images = len(images)
@@ -342,7 +341,7 @@ def display_results_grid(
     else:
         axes = axes.flatten()
 
-    for i, (img, title) in enumerate(zip(images, titles)):
+    for i, (img, title) in enumerate(zip(images, titles, strict=False)):
         if len(img.shape) == 3 and img.shape[2] == 3:
             # Convert BGR to RGB if needed
             if img.dtype == np.uint8 and np.mean(img) > 1:

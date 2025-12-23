@@ -1,7 +1,6 @@
 # Copyright (c) Meta Platforms, Inc. and affiliates.
 
 import os
-from typing import Dict, Optional, Union
 
 import cv2
 import numpy as np
@@ -13,9 +12,9 @@ def draw_text(
     image: np.ndarray,
     texts: str,
     positions: np.ndarray,
-    image_size: Optional[tuple] = None,
-    font_size: Optional[int] = None,
-    color: Union[str, tuple] = "g",
+    image_size: tuple | None = None,
+    font_size: int | None = None,
+    color: str | tuple = "g",
     vertical_alignment: str = "top",
     horizontal_alignment: str = "left",
 ):
@@ -101,7 +100,7 @@ def draw_box(
     return img
 
 
-def parse_pose_metainfo(metainfo: Union[str, Dict]):
+def parse_pose_metainfo(metainfo: str | dict):
     """Load meta information of pose dataset and check its integrity.
 
     Args:

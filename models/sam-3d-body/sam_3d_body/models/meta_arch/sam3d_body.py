@@ -1,6 +1,6 @@
 # Copyright (c) Meta Platforms, Inc. and affiliates.
 
-from typing import Any, Dict, Optional, Tuple
+from typing import Any
 
 import numpy as np
 import roma
@@ -18,13 +18,11 @@ from sam_3d_body.utils import recursive_to
 from sam_3d_body.utils.logging import get_pylogger
 
 from ..backbones import create_backbone
-from ..decoders import build_decoder, build_keypoint_sampler, PromptEncoder
+from ..decoders import PromptEncoder, build_decoder, build_keypoint_sampler
 from ..heads import build_head
 from ..modules.camera_embed import CameraEncoder
 from ..modules.transformer import FFN, MLP
-
 from .base_model import BaseModel
-
 
 logger = get_pylogger(__name__)
 
@@ -242,7 +240,7 @@ class SAM3DBody(BaseModel):
             add_identity=False,
         )
 
-    def _get_decoder_condition(self, batch: Dict) -> Optional[torch.Tensor]:
+    def _get_decoder_condition(self, batch: dict) -> torch.Tensor | None:
         num_person = batch["img"].shape[1]
 
         if self.cfg.MODEL.DECODER.CONDITION_TYPE == "cliff":
@@ -289,10 +287,10 @@ class SAM3DBody(BaseModel):
     def forward_decoder(
         self,
         image_embeddings: torch.Tensor,
-        init_estimate: Optional[torch.Tensor] = None,
-        keypoints: Optional[torch.Tensor] = None,
-        prev_estimate: Optional[torch.Tensor] = None,
-        condition_info: Optional[torch.Tensor] = None,
+        init_estimate: torch.Tensor | None = None,
+        keypoints: torch.Tensor | None = None,
+        prev_estimate: torch.Tensor | None = None,
+        condition_info: torch.Tensor | None = None,
         batch=None,
     ):
         """
@@ -518,10 +516,10 @@ class SAM3DBody(BaseModel):
     def forward_decoder_hand(
         self,
         image_embeddings: torch.Tensor,
-        init_estimate: Optional[torch.Tensor] = None,
-        keypoints: Optional[torch.Tensor] = None,
-        prev_estimate: Optional[torch.Tensor] = None,
-        condition_info: Optional[torch.Tensor] = None,
+        init_estimate: torch.Tensor | None = None,
+        keypoints: torch.Tensor | None = None,
+        prev_estimate: torch.Tensor | None = None,
+        condition_info: torch.Tensor | None = None,
         batch=None,
     ):
         """
@@ -891,7 +889,7 @@ class SAM3DBody(BaseModel):
 
     def _full_to_crop(
         self,
-        batch: Dict,
+        batch: dict,
         pred_keypoints_2d: torch.Tensor,
         batch_idx: torch.Tensor = None,
     ) -> torch.Tensor:
@@ -914,7 +912,7 @@ class SAM3DBody(BaseModel):
 
         return pred_keypoints_2d_cropped
 
-    def camera_project(self, pose_output: Dict, batch: Dict) -> Dict:
+    def camera_project(self, pose_output: dict, batch: dict) -> dict:
         """
         Project 3D keypoints to 2D using the camera parameters.
         Args:
@@ -969,7 +967,7 @@ class SAM3DBody(BaseModel):
 
         return pose_output
 
-    def camera_project_hand(self, pose_output: Dict, batch: Dict) -> Dict:
+    def camera_project_hand(self, pose_output: dict, batch: dict) -> dict:
         """
         Project 3D keypoints to 2D using the camera parameters.
         Args:
@@ -1055,7 +1053,7 @@ class SAM3DBody(BaseModel):
             batch["img"].dtype
         )  # This is B x num_person x 2 x H x W
 
-    def forward_pose_branch(self, batch: Dict) -> Dict:
+    def forward_pose_branch(self, batch: dict) -> dict:
         """Run a forward pass for the crop-image (pose) branch."""
         batch_size, num_person = batch["img"].shape[:2]
 
@@ -1177,8 +1175,8 @@ class SAM3DBody(BaseModel):
         return output
 
     def forward_step(
-        self, batch: Dict, decoder_type: str = "body"
-    ) -> Tuple[Dict, Dict]:
+        self, batch: dict, decoder_type: str = "body"
+    ) -> tuple[dict, dict]:
         batch_size, num_person = batch["img"].shape[:2]
 
         if decoder_type == "body":
@@ -1198,7 +1196,7 @@ class SAM3DBody(BaseModel):
     def run_inference(
         self,
         img,
-        batch: Dict,
+        batch: dict,
         inference_type: str = "full",
         transform_hand: Any = None,
         thresh_wrist_angle=1.4,

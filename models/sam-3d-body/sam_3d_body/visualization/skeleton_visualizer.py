@@ -1,6 +1,5 @@
 # Copyright (c) Meta Platforms, Inc. and affiliates.
 
-from typing import Dict, Optional, Tuple, Union
 
 import cv2
 import numpy as np
@@ -11,12 +10,12 @@ from .utils import draw_text, parse_pose_metainfo
 class SkeletonVisualizer:
     def __init__(
         self,
-        bbox_color: Optional[Union[str, Tuple[int]]] = "green",
-        kpt_color: Optional[Union[str, Tuple[Tuple[int]]]] = "red",
-        link_color: Optional[Union[str, Tuple[Tuple[int]]]] = None,
-        text_color: Optional[Union[str, Tuple[int]]] = (255, 255, 255),
-        line_width: Union[int, float] = 1,
-        radius: Union[int, float] = 3,
+        bbox_color: str | tuple[int] | None = "green",
+        kpt_color: str | tuple[tuple[int]] | None = "red",
+        link_color: str | tuple[tuple[int]] | None = None,
+        text_color: str | tuple[int] | None = (255, 255, 255),
+        line_width: int | float = 1,
+        radius: int | float = 3,
         alpha: float = 1.0,
         show_keypoint_weight: bool = False,
     ):
@@ -33,7 +32,7 @@ class SkeletonVisualizer:
         self.pose_meta = {}
         self.skeleton = None
 
-    def set_pose_meta(self, pose_meta: Dict):
+    def set_pose_meta(self, pose_meta: dict):
         parsed_meta = parse_pose_metainfo(pose_meta)
 
         self.pose_meta = parsed_meta.copy()

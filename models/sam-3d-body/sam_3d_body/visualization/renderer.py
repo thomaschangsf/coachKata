@@ -14,7 +14,6 @@ if "PYOPENGL_PLATFORM" not in os.environ:
     else:
         # On Linux, use EGL for headless rendering
         os.environ["PYOPENGL_PLATFORM"] = "egl"
-from typing import List, Optional
 
 import cv2
 import numpy as np
@@ -29,7 +28,7 @@ def get_light_poses(n_lights=5, elevation=np.pi / 3, dist=12):
     phis = 2 * np.pi * np.arange(n_lights) / n_lights
     poses = []
     trans = make_translation(torch.tensor([0, 0, dist]))
-    for phi, theta in zip(phis, thetas):
+    for phi, theta in zip(phis, thetas, strict=False):
         rot = make_rotation(rx=-theta, ry=phi, order="xyz")
         poses.append((rot @ trans).numpy())
     return poses
@@ -107,7 +106,7 @@ def rotz(theta):
     )
 
 
-def create_raymond_lights() -> List[pyrender.Node]:
+def create_raymond_lights() -> list[pyrender.Node]:
     """
     Return raymond light nodes for the scene.
     """
@@ -116,7 +115,7 @@ def create_raymond_lights() -> List[pyrender.Node]:
 
     nodes = []
 
-    for phi, theta in zip(phis, thetas):
+    for phi, theta in zip(phis, thetas, strict=False):
         xp = np.sin(theta) * np.cos(phi)
         yp = np.sin(theta) * np.sin(phi)
         zp = np.cos(theta)
@@ -160,7 +159,7 @@ class Renderer:
         cam_t: np.array,
         image: np.ndarray,
         full_frame: bool = False,
-        imgname: Optional[str] = None,
+        imgname: str | None = None,
         side_view=False,
         top_view=False,
         rot_angle=90,
@@ -246,7 +245,7 @@ class Renderer:
                 np.array([0.2, 1, 0.2]),
                 np.array([0.2, 0.2, 1]),
             ]
-            for ln, color in zip(light_nodes, colors):
+            for ln, color in zip(light_nodes, colors, strict=False):
                 ln.light.color = color
                 ln.light.intensity = 2.0
 
@@ -365,8 +364,8 @@ class Renderer:
 
     def render_rgba_multiple(
         self,
-        vertices: List[np.array],
-        cam_t: List[np.array],
+        vertices: list[np.array],
+        cam_t: list[np.array],
         rot_axis=[1, 0, 0],
         rot_angle=0,
         mesh_base_color=(1.0, 1.0, 0.9),
@@ -396,7 +395,7 @@ class Renderer:
                     rot_angle,
                 )
             )
-            for n, (vvv, ttt) in enumerate(zip(vertices, cam_t))
+            for n, (vvv, ttt) in enumerate(zip(vertices, cam_t, strict=False))
         ]
 
         scene = pyrender.Scene(

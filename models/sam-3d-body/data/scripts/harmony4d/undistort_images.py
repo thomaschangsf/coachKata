@@ -1,25 +1,15 @@
 # Copyright (c) Meta Platforms, Inc. and affiliates.
+import argparse
 import os
-from pathlib import Path
-
-import _init_paths
+import warnings
+from concurrent.futures import ProcessPoolExecutor, as_completed
 
 import cv2
 import numpy as np
-
-import os
-
 import pandas as pd
-from tqdm.auto import tqdm
-from concurrent.futures import ProcessPoolExecutor, as_completed
-from typing import List
-
 from config import cfg
 from lib.datasets.ego_exo_scene import EgoExoSceneVis
-import warnings
-
-
-import argparse
+from tqdm.auto import tqdm
 
 
 def save_frames(cam_name: str, src_dir: str, dst_dir: str, scale: float):
@@ -65,7 +55,7 @@ def save_frames(cam_name: str, src_dir: str, dst_dir: str, scale: float):
 
 # Loads dataframe at target path to csv
 def load_csv_to_df(filepath: str) -> pd.DataFrame:
-    with open(filepath, "r") as csv_file:
+    with open(filepath) as csv_file:
         return pd.read_csv(csv_file)
 
 
@@ -199,13 +189,13 @@ def main():
     scale: float = args.scale
 
     if seqs == "":
-        seqs: List[str] = []
+        seqs: list[str] = []
         for split in ["train", "test"]:
             for seq in sorted(os.listdir(os.path.join(src_dir, split))):
                 for subseq in sorted(os.listdir(os.path.join(src_dir, split, seq))):
                     seqs.append(os.path.join(split, seq, subseq))
     else:
-        seqs: List[str] = seqs.split(",")
+        seqs: list[str] = seqs.split(",")
 
     for seq in seqs:
         extract_images(seq=seq, input_dir=src_dir, output_dir=dst_dir, scale=scale)

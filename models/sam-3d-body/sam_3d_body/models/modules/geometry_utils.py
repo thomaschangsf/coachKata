@@ -1,9 +1,7 @@
 # Copyright (c) Meta Platforms, Inc. and affiliates.
 
-from typing import Optional
 
 import cv2
-
 import numpy as np
 import torch
 from torch.nn import functional as F
@@ -151,8 +149,8 @@ def rot_aa(aa: np.array, rot: float) -> np.array:
 
 def transform_points(
     points: torch.Tensor,
-    translation: Optional[torch.Tensor] = None,
-    rotation: Optional[torch.Tensor] = None,
+    translation: torch.Tensor | None = None,
+    rotation: torch.Tensor | None = None,
 ) -> torch.Tensor:
     """
     Transform a set of 3D points given translation and rotation.

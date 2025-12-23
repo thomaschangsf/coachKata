@@ -1,6 +1,5 @@
 # Copyright (c) Meta Platforms, Inc. and affiliates.
 
-from typing import Dict
 
 from omegaconf import DictConfig, ListConfig, OmegaConf
 from omegaconf.errors import InterpolationResolutionError
@@ -45,7 +44,7 @@ def resolve_omegaconf_to_dict(conf):
             return conf
 
 
-def to_lower(x: Dict) -> Dict:
+def to_lower(x: dict) -> dict:
     """
     Convert all dictionary keys to lowercase
     Args:

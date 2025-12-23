@@ -1,15 +1,16 @@
 # Copyright (c) Meta Platforms, Inc. and affiliates.
 import os
+
 import torch
 
 from .models.meta_arch import SAM3DBody
-from .utils.config import get_config
 from .utils.checkpoint import load_state_dict
+from .utils.config import get_config
 
 
 def load_sam_3d_body(checkpoint_path: str = "", device: str = "cpu", mhr_path: str = ""):
     print("Loading SAM 3D Body model...")
-    
+
     # Check the current directory, and if not present check the parent dir.
     model_cfg = os.path.join(os.path.dirname(checkpoint_path), "model_config.yaml")
     if not os.path.exists(model_cfg):
@@ -45,7 +46,7 @@ def load_sam_3d_body(checkpoint_path: str = "", device: str = "cpu", mhr_path: s
         print(f"Warning: Could not use device '{device}': {e}, falling back to CPU")
         device = "cpu"
         model = model.to(device)
-    
+
     model.eval()
     return model, model_cfg
 

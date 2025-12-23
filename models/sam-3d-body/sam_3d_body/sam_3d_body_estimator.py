@@ -1,10 +1,9 @@
 # Copyright (c) Meta Platforms, Inc. and affiliates.
-from typing import Optional, Union
 
 import cv2
-
 import numpy as np
 import torch
+from torchvision.transforms import ToTensor
 
 from sam_3d_body.data.transforms import (
     Compose,
@@ -12,11 +11,9 @@ from sam_3d_body.data.transforms import (
     TopdownAffine,
     VisionTransformWrapper,
 )
-
 from sam_3d_body.data.utils.io import load_image
 from sam_3d_body.data.utils.prepare_batch import prepare_batch
 from sam_3d_body.utils import recursive_to
-from torchvision.transforms import ToTensor
 
 
 class SAM3DBodyEstimator:
@@ -63,10 +60,10 @@ class SAM3DBodyEstimator:
     @torch.no_grad()
     def process_one_image(
         self,
-        img: Union[str, np.ndarray],
-        bboxes: Optional[np.ndarray] = None,
-        masks: Optional[np.ndarray] = None,
-        cam_int: Optional[np.ndarray] = None,
+        img: str | np.ndarray,
+        bboxes: np.ndarray | None = None,
+        masks: np.ndarray | None = None,
+        cam_int: np.ndarray | None = None,
         det_cat_id: int = 0,
         bbox_thr: float = 0.5,
         nms_thr: float = 0.3,

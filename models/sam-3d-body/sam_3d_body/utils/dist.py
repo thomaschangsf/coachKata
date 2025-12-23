@@ -4,14 +4,16 @@ import os
 import pickle
 import shutil
 import tempfile
-from typing import Any, Iterable, List, Mapping, Optional, Tuple, Union
+from collections.abc import Iterable, Mapping
+from typing import Any
 
 import torch
-from torch import distributed as torch_dist, Tensor
+from torch import Tensor
+from torch import distributed as torch_dist
 from torch.distributed import ProcessGroup
 
 
-def recursive_to(x: Any, target: Union[torch.device, str]):
+def recursive_to(x: Any, target: torch.device | str):
     """
     Recursively transfer a batch of data to the target device
     Args:
@@ -45,7 +47,7 @@ def recursive_to(x: Any, target: Union[torch.device, str]):
                     target = torch.device("cpu")
             except (AssertionError, RuntimeError):
                 target = torch.device("cpu")
-    
+
     if isinstance(x, dict):
         return {k: recursive_to(v, target) for k, v in x.items()}
     elif isinstance(x, torch.Tensor):
@@ -78,7 +80,7 @@ def get_default_group():
     return torch_dist.distributed_c10d._get_default_group()
 
 
-def get_world_size(group: Optional[ProcessGroup] = None) -> int:
+def get_world_size(group: ProcessGroup | None = None) -> int:
     """Return the number of the given process group.
 
     Note:
@@ -103,7 +105,7 @@ def get_world_size(group: Optional[ProcessGroup] = None) -> int:
         return 1
 
 
-def get_rank(group: Optional[ProcessGroup] = None) -> int:
+def get_rank(group: ProcessGroup | None = None) -> int:
     """Return the rank of the given process group.
 
     Rank is a unique identifier assigned to each process within a distributed
@@ -132,7 +134,7 @@ def get_rank(group: Optional[ProcessGroup] = None) -> int:
         return 0
 
 
-def get_dist_info(group: Optional[ProcessGroup] = None) -> Tuple[int, int]:
+def get_dist_info(group: ProcessGroup | None = None) -> tuple[int, int]:
     """Get distributed information of the given process group.
 
     Note:
@@ -152,7 +154,7 @@ def get_dist_info(group: Optional[ProcessGroup] = None) -> Tuple[int, int]:
     return rank, world_size
 
 
-def is_main_process(group: Optional[ProcessGroup] = None) -> bool:
+def is_main_process(group: ProcessGroup | None = None) -> bool:
     """Whether the current rank of the given process group is equal to 0.
 
     Args:
@@ -166,7 +168,7 @@ def is_main_process(group: Optional[ProcessGroup] = None) -> bool:
     return get_rank(group) == 0
 
 
-def barrier(group: Optional[ProcessGroup] = None) -> None:
+def barrier(group: ProcessGroup | None = None) -> None:
     """Synchronize all processes from the given process group.
 
     This collective blocks processes until the whole group enters this
@@ -187,7 +189,7 @@ def barrier(group: Optional[ProcessGroup] = None) -> None:
         torch_dist.barrier(group)
 
 
-def get_data_device(data: Union[Tensor, Mapping, Iterable]) -> torch.device:
+def get_data_device(data: Tensor | Mapping | Iterable) -> torch.device:
     """Return the device of ``data``.
 
     If ``data`` is a sequence of Tensor, all items in ``data`` should have a
@@ -256,7 +258,7 @@ def get_data_device(data: Union[Tensor, Mapping, Iterable]) -> torch.device:
         )
 
 
-def get_backend(group: Optional[ProcessGroup] = None) -> Optional[str]:
+def get_backend(group: ProcessGroup | None = None) -> str | None:
     """Return the backend of the given process group.
 
     Note:
@@ -283,7 +285,7 @@ def get_backend(group: Optional[ProcessGroup] = None) -> Optional[str]:
         return None
 
 
-def get_comm_device(group: Optional[ProcessGroup] = None) -> torch.device:
+def get_comm_device(group: ProcessGroup | None = None) -> torch.device:
     """Return the device for communication among groups.
 
     Args:
@@ -311,10 +313,10 @@ def get_comm_device(group: Optional[ProcessGroup] = None) -> torch.device:
 
 
 def cast_data_device(
-    data: Union[Tensor, Mapping, Iterable],
+    data: Tensor | Mapping | Iterable,
     device: torch.device,
-    out: Optional[Union[Tensor, Mapping, Iterable]] = None,
-) -> Union[Tensor, Mapping, Iterable]:
+    out: Tensor | Mapping | Iterable | None = None,
+) -> Tensor | Mapping | Iterable:
     """Recursively convert Tensor in ``data`` to ``device``.
 
     If ``data`` has already on the ``device``, it will not be casted again.
@@ -379,7 +381,7 @@ def cast_data_device(
     ):
         data_on_device = []
         if out is not None:
-            for v1, v2 in zip(data, out):
+            for v1, v2 in zip(data, out, strict=False):
                 data_on_device.append(cast_data_device(v1, device, v2))
         else:
             for v in data:
@@ -395,7 +397,7 @@ def cast_data_device(
         )
 
 
-def broadcast(data: Tensor, src: int = 0, group: Optional[ProcessGroup] = None) -> None:
+def broadcast(data: Tensor, src: int = 0, group: ProcessGroup | None = None) -> None:
     """Broadcast the data from ``src`` process to the whole group.
 
     ``data`` must have the same number of elements in all processes
@@ -450,7 +452,7 @@ def broadcast(data: Tensor, src: int = 0, group: Optional[ProcessGroup] = None) 
 
 
 def broadcast_object_list(
-    data: List[Any], src: int = 0, group: Optional[Any] = None
+    data: list[Any], src: int = 0, group: Any | None = None
 ) -> None:
     """Broadcasts picklable objects in ``object_list`` to the whole group.
     Similar to :func:`broadcast`, but Python objects can be passed in. Note
@@ -512,8 +514,8 @@ def broadcast_object_list(
 
 
 def collect_results(
-    results: list, size: int, device: str = "cpu", tmpdir: Optional[str] = None
-) -> Optional[list]:
+    results: list, size: int, device: str = "cpu", tmpdir: str | None = None
+) -> list | None:
     """Collected results in distributed environments.
 
     Args:
@@ -556,7 +558,7 @@ def collect_results(
         return collect_results_cpu(results, size, tmpdir)
 
 
-def _collect_results_device(result_part: list, size: int) -> Optional[list]:
+def _collect_results_device(result_part: list, size: int) -> list | None:
     """Collect results under gpu or npu mode."""
     rank, world_size = get_dist_info()
     if world_size == 1:
@@ -571,7 +573,7 @@ def _collect_results_device(result_part: list, size: int) -> Optional[list]:
     if rank == 0:
         # sort the results
         ordered_results = []
-        for res in zip(*part_list):
+        for res in zip(*part_list, strict=False):
             ordered_results.extend(list(res))
         # the dataloader may pad some samples
         ordered_results = ordered_results[:size]
@@ -581,8 +583,8 @@ def _collect_results_device(result_part: list, size: int) -> Optional[list]:
 
 
 def collect_results_cpu(
-    result_part: list, size: int, tmpdir: Optional[str] = None
-) -> Optional[list]:
+    result_part: list, size: int, tmpdir: str | None = None
+) -> list | None:
     """Collect results under cpu mode.
 
     On cpu mode, this function will save the results on different gpus to
@@ -664,7 +666,7 @@ def collect_results_cpu(
         part_list = [single for single in part_list if len(single) > 0]
         # sort the results
         ordered_results = []
-        for res in zip(*part_list):
+        for res in zip(*part_list, strict=False):
             ordered_results.extend(list(res))
         # the dataloader may pad some samples
         ordered_results = ordered_results[:size]

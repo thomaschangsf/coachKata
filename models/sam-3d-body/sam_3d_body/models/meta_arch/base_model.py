@@ -4,18 +4,16 @@
 
 from abc import abstractmethod
 from functools import partial
-from typing import Dict, Optional
 
 import torch
 from yacs.config import CfgNode
 
 from ..optim.fp16_utils import convert_module_to_f16, convert_to_fp16_safe
-
 from .base_lightning_module import BaseLightningModule
 
 
 class BaseModel(BaseLightningModule):
-    def __init__(self, cfg: Optional[CfgNode], **kwargs):
+    def __init__(self, cfg: CfgNode | None, **kwargs):
         super().__init__()
 
         # Save hyperparameters
@@ -66,7 +64,7 @@ class BaseModel(BaseLightningModule):
 
         return batch_inputs
 
-    def _initialize_batch(self, batch: Dict) -> None:
+    def _initialize_batch(self, batch: dict) -> None:
         # Check whether the input batch is with format
         # [batch_size, num_person, ...]
         if batch["img"].dim() == 5:
@@ -100,7 +98,7 @@ class BaseModel(BaseLightningModule):
         return x
 
     def _full_to_crop(
-        self, batch: Dict, pred_keypoints_2d: torch.Tensor
+        self, batch: dict, pred_keypoints_2d: torch.Tensor
     ) -> torch.Tensor:
         """Convert full-image keypoints coordinates to crop and normalize to [-0.5. 0.5]"""
         pred_keypoints_2d_cropped = torch.cat(
@@ -116,7 +114,7 @@ class BaseModel(BaseLightningModule):
         return pred_keypoints_2d_cropped
 
     def _cam_full_to_crop(
-        self, batch: Dict, pred_cam_t: torch.Tensor, focal_length: torch.Tensor = None
+        self, batch: dict, pred_cam_t: torch.Tensor, focal_length: torch.Tensor = None
     ) -> torch.Tensor:
         """Revert the camera translation from full to crop image space"""
         num_person = batch["img"].shape[1]

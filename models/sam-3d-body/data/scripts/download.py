@@ -3,11 +3,11 @@ import os
 
 os.environ["OMP_NUM_THREADS"] = "1"
 
-from typing import List, Dict
-from huggingface_hub import HfApi, hf_hub_download
+import argparse
 from collections import defaultdict
 from concurrent.futures import ProcessPoolExecutor, as_completed
-import argparse
+
+from huggingface_hub import HfApi, hf_hub_download
 
 
 def download_file(repo_id: str, repo_type: str, local_dir: str, filename: str):
@@ -31,7 +31,7 @@ def download_files_multiprocess(
     repo_id: str,
     repo_type: str,
     local_dir: str,
-    filenames: List[str],
+    filenames: list[str],
     max_workers: int,
 ) -> None:
     """Parallel download without returning results."""
@@ -95,13 +95,13 @@ def main():
         split_files[split].append(file)
 
     if splits != "":
-        splits: List[str] = sorted(
+        splits: list[str] = sorted(
             [split for split in splits.split(",") if split in split_files]
         )
     else:
-        splits: List[str] = sorted(list(split_files.keys()))
+        splits: list[str] = sorted(list(split_files.keys()))
 
-    split_files: Dict[str, List[str]] = {
+    split_files: dict[str, list[str]] = {
         split: sorted(split_files[split]) for split in splits if split in split_files
     }
 

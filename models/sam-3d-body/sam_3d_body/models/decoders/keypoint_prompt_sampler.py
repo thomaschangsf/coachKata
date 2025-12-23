@@ -2,10 +2,8 @@
 
 import random
 from abc import ABC, abstractmethod
-from typing import Dict, List
 
 import torch
-
 from omegaconf import DictConfig
 
 
@@ -65,8 +63,8 @@ class KeypointSamplerV1(BaseKeypointSampler):
     def __init__(
         self,
         sampler_cfg: DictConfig,
-        prompt_keypoints: Dict,
-        keybody_idx: List,
+        prompt_keypoints: dict,
+        keybody_idx: list,
     ):
         self.prompt_keypoints = prompt_keypoints
         self._keybody_idx = keybody_idx

@@ -7,7 +7,7 @@ import sys
 
 print("=== Module Execution Test ===")
 print(f"Script name: {__name__}")
-print(f"Python path:")
+print("Python path:")
 for path in sys.path:
     print(f"  {path}")
-print(f"Current working directory: {sys.path[0]}") 
+print(f"Current working directory: {sys.path[0]}")

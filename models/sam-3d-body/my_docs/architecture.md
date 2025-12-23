@@ -155,58 +155,170 @@ The rotation matrices (`pred_global_rots`) are like **part-of-speech tags** in N
 
 **Purpose:** The MHR Head is like a **task-specific output layer** in NLP. Just as a BERT model might have a classification head that converts embeddings to class probabilities, the MHR Head converts pose tokens to MHR (Momentum Human Rig) parameters.
 
-**What "Converts pose tokens to MHR parameters" means:**
+**Relationship Between Pose Tokens and Pose Parameters:**
+
+**Key Point:** Pose tokens and pose parameters are **both derived from the same decoder embeddings**, but they represent different stages of the transformation pipeline:
+
+1. **Pose Tokens** = Direct output from decoder (intermediate representation)
+2. **Pose Parameters** = Transformed output from MHRHead (task-specific representation)
 
 **NLP Analogy:**
-- In NLP, you might have: `[CLS] token embedding (768-dim)` → `Linear layer` → `Class probabilities (num_classes)`
-- Similarly: `Pose token (1024-dim)` → `MHR Head (MLP)` → `MHR parameters (404-dim)`
+- **Pose Tokens** are like the `[CLS]` token embedding from BERT - a learned representation that captures the pose information
+- **Pose Parameters** are like the output from a classification head - a transformed version optimized for the specific task (generating 3D mesh)
 
-The MHR parameters are a **compact representation** of the human body pose, similar to how a sentence embedding compactly represents a sentence's meaning.
+**The Flow:**
 
-**Example Input:**
-```python
-# Input: Pose token from decoder
-pose_token = tensor([...])  # Shape: (batch_size, 1024)
-# This is a learned embedding that encodes the entire body pose
-
-# Optional: Previous estimate (for iterative refinement)
-init_estimate = None  # Or tensor([...]) with shape (batch_size, 404)
+```
+Decoder Embeddings (image features)
+    ↓
+Decoder Transformer Layers
+    ↓
+Pose Token (1024-dim) ← Intermediate representation
+    ↓
+MHRHead.proj (Linear/MLP layer)
+    ↓
+Pose Parameters (404-dim) ← Task-specific representation
+    ↓
+Parameter Decomposition
+    ↓
+MHR Model → 3D Mesh
 ```
 
-**Example Output:**
+**Example Input (Pose Token):**
 ```python
-# Output from MHRHead.forward()
+# Input: Pose token from decoder
+pose_token = tensor([
+    [0.12, -0.45, 0.89, ..., 0.23],  # 1024 values
+    [0.15, -0.43, 0.91, ..., 0.25],  # For batch_size=2
+])  # Shape: (batch_size, 1024)
+# This is a learned embedding that encodes the entire body pose
+# It's the FIRST token from the decoder output (tokens[:, 0])
+```
+
+**Example Intermediate Output (Pose Parameters):**
+```python
+# After MHRHead.proj(pose_token)
+pose_params = tensor([
+    [0.1, 0.2, 0.3, ..., 0.5],  # 404 values
+    [0.12, 0.22, 0.32, ..., 0.52],
+])  # Shape: (batch_size, 404)
+# This is the "raw" pose parameters before decomposition
+```
+
+**Example Final Output (Decomposed Parameters):**
+```python
+# Output from MHRHead.forward() - after decomposition
 output = {
+    # Raw parameters (what you get directly from pose_token)
     'pred_pose_raw': tensor([...]),      # (B, 404) - Raw continuous pose params
-    'global_rot': tensor([...]),         # (B, 3) - Global body rotation (Euler)
-    'body_pose': tensor([...]),          # (B, 130) - Body joint rotations
+    
+    # Decomposed parameters (split from pred_pose_raw)
+    'global_rot': tensor([...]),         # (B, 3) - Global body rotation (Euler angles)
+    'body_pose': tensor([...]),          # (B, 130) - Body joint rotations (Euler)
     'shape': tensor([...]),               # (B, 45) - Body shape parameters
     'scale': tensor([...]),               # (B, 28) - Scale parameters
     'hand': tensor([...]),               # (B, 108) - Hand pose (54 per hand)
+    'face': tensor([...]),                # (B, 72) - Face expression (usually zeroed)
+    
+    # Generated 3D outputs (from MHR forward kinematics)
     'pred_keypoints_3d': tensor([...]),   # (B, 70, 3) - 3D keypoint coordinates
-    'pred_vertices': tensor([...]),      # (B, 18439, 3) - Full 3D mesh
+    'pred_vertices': tensor([...]),      # (B, 18439, 3) - Full 3D mesh vertices
     'pred_joint_coords': tensor([...]),  # (B, 127, 3) - Joint positions
     'joint_global_rots': tensor([...])   # (B, 127, 3, 3) - Rotation matrices
 }
 ```
 
-**The Conversion Process:**
+**The Conversion Process (Step-by-Step):**
 
-1. **Linear Projection**: `pose_token (1024)` → `MLP` → `pose_params (404)`
-   - Like: `sentence_embedding` → `classifier` → `class_logits`
+1. **Pose Token Extraction**: 
+   ```python
+   # In decoder: tokens[:, 0] extracts the first token
+   pose_token = decoder_output[:, 0]  # (B, 1024)
+   ```
 
-2. **Parameter Decomposition**: The 404-dim vector is split into:
-   - Global rotation (6-dim, converted to 3-dim Euler)
-   - Body pose (260-dim continuous → 130-dim Euler angles)
-   - Shape (45-dim)
-   - Scale (28-dim)
-   - Hand (108-dim)
-   - Face (72-dim, usually zeroed)
+2. **Linear Projection**: 
+   ```python
+   # In MHRHead.forward():
+   pred = self.proj(pose_token)  # (B, 1024) → (B, 404)
+   # This is a simple MLP: FFN(input_dim=1024, output_dim=404)
+   ```
 
-3. **Forward Kinematics**: Parameters → 3D Mesh
-   - Uses MHR model (like a "grammar" for human bodies)
-   - Applies rotations, scales, shapes to generate actual 3D coordinates
-   - Like: `parse_tree` → `sentence` (but for 3D geometry)
+3. **Parameter Decomposition**: The 404-dim vector is split into interpretable components:
+   ```python
+   # Decomposition (from pred_pose_raw):
+   global_rot_6d = pred[:, :6]           # First 6 dims → 3D rotation matrix
+   body_pose_cont = pred[:, 6:266]        # Next 260 dims → 130 joint rotations
+   shape = pred[:, 266:311]               # Next 45 dims → body shape
+   scale = pred[:, 311:339]               # Next 28 dims → scale parameters
+   hand = pred[:, 339:447]                # Next 108 dims → hand pose
+   face = pred[:, 447:519]                # Next 72 dims → face expression
+   ```
+
+4. **Forward Kinematics**: Parameters → 3D Mesh
+   ```python
+   # Uses MHR model (like a "grammar" for human bodies)
+   verts, keypoints_3d = mhr_forward(
+       global_rot, body_pose, shape, scale, hand, face
+   )
+   ```
+
+**Are They Both Derived from the Same Decoder Embeddings?**
+
+**Yes, but at different stages:**
+
+- **Pose Tokens**: Direct output from the decoder transformer (the first token: `tokens[:, 0]`)
+  - Shape: `(batch_size, 1024)`
+  - This is the "raw" learned representation
+
+- **Pose Parameters**: Derived from pose tokens via MHRHead's projection layer
+  - Shape: `(batch_size, 404)`
+  - This is a transformed version optimized for MHR model input
+
+**Think of it like this (NLP analogy):**
+- **Decoder Embeddings** = All token embeddings from BERT encoder
+- **Pose Token** = `[CLS]` token embedding (summary of the pose)
+- **Pose Parameters** = Output from a task-specific head (like classification logits, but for pose)
+
+**Why Both Exist:**
+
+- **Pose Tokens** are useful for:
+  - Iterative refinement (can be fed back into decoder)
+  - Multi-task learning (can be used for other tasks)
+  - Intermediate debugging/analysis
+
+- **Pose Parameters** are useful for:
+  - Direct interpretation (each dimension has meaning)
+  - Editing poses (modify specific parameters)
+  - Compatibility with MHR model (required format)
+
+**Concrete Example: Same Pose in Both Formats**
+
+```python
+# After decoder forward pass:
+decoder_output = decoder(image_embeddings, ...)  # Returns tokens
+pose_token = decoder_output[0][:, 0]  # Extract first token
+# pose_token shape: (batch_size=1, 1024)
+# Example values: [0.12, -0.45, 0.89, 0.23, ..., 0.67]  # 1024 floats
+
+# After MHRHead.proj:
+pose_params = mhr_head.proj(pose_token)
+# pose_params shape: (batch_size=1, 404)
+# Example values: [0.1, 0.2, 0.3, ..., 0.5]  # 404 floats
+
+# After decomposition:
+decomposed = {
+    'global_rot': pose_params[:, :6],      # [0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
+    'body_pose': pose_params[:, 6:266],    # [0.7, 0.8, ..., 0.9]  # 260 values
+    'shape': pose_params[:, 266:311],      # [0.11, 0.12, ..., 0.15]  # 45 values
+    'scale': pose_params[:, 311:339],      # [0.16, 0.17, ..., 0.18]  # 28 values
+    'hand': pose_params[:, 339:447],       # [0.19, 0.20, ..., 0.21]  # 108 values
+    'face': pose_params[:, 447:519],       # [0.0, 0.0, ..., 0.0]  # 72 values (zeroed)
+}
+
+# Both represent the SAME pose, just in different formats:
+# - pose_token: Learned embedding (not directly interpretable)
+# - pose_params: Structured parameters (each dimension has meaning)
+```
 
 **Why MHR Parameters Matter:**
 
@@ -307,18 +419,28 @@ MHR parameters are **interpretable** and **editable**:
 **Data Flow Summary:**
 
 1. **Image** → `SAM3DBodyEstimator.process_one_image()`
-2. **Preprocessed Image** → `SAM3DBody.backbone` → **Image Embeddings**
-3. **Image Embeddings** → `SAM3DBody.decoder` → **Pose Tokens** (1024-dim)
-4. **Pose Tokens** → `MHRHead` → **MHR Parameters** (404-dim)
-5. **MHR Parameters** → `MHRHead.mhr_forward()` → **3D Mesh & Keypoints**
-6. **3D Data** → Formatted dictionary → **Visualization/Use**
+2. **Preprocessed Image** → `SAM3DBody.backbone` → **Image Embeddings** (B, C, H, W)
+3. **Image Embeddings** → `SAM3DBody.decoder` → **Pose Tokens** (B, 1024-dim)
+   - Note: Pose token is extracted as `tokens[:, 0]` - the first token from decoder
+4. **Pose Tokens** → `MHRHead.proj` (MLP) → **Pose Parameters** (B, 404-dim)
+   - This is a linear transformation: `pose_params = MLP(pose_token)`
+5. **Pose Parameters** → Decomposition → **Structured Parameters** (global_rot, body_pose, shape, scale, hand)
+6. **Structured Parameters** → `MHRHead.mhr_forward()` → **3D Mesh & Keypoints**
+7. **3D Data** → Formatted dictionary → **Visualization/Use**
+
+**Key Relationship:**
+- **Pose Tokens** and **Pose Parameters** are both derived from the same decoder output
+- **Pose Token** = Direct decoder output (intermediate representation)
+- **Pose Parameters** = Transformed via MHRHead.proj (task-specific representation)
+- Both represent the same pose, but in different formats optimized for different purposes
 
 **NLP Analogy for the Full Flow:**
 - **Image** = Raw text
 - **Backbone** = Tokenizer + BERT encoder
 - **Decoder** = GPT decoder (generates pose "tokens")
-- **MHRHead** = Task head (like classification/regression head)
-- **MHR Parameters** = Structured output (like named entities or parse trees)
+- **Pose Token** = `[CLS]` token embedding (summary representation)
+- **MHRHead.proj** = Task-specific head (like classification layer)
+- **Pose Parameters** = Structured output (like named entities or parse trees)
 - **3D Mesh** = Final interpretable result (like generated text or extracted information)
 
 ---

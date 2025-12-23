@@ -6,14 +6,15 @@
 # ============================================================================
 
 # Add the project root to Python path
-import sys
 import os
+import sys
+
 sys.path.insert(0, os.path.abspath('..'))
 
 # Import required libraries
-import numpy as np
 import cv2
 import matplotlib.pyplot as plt
+import numpy as np
 
 print("✅ Setup complete - Python path updated")
 
@@ -38,12 +39,12 @@ try:
     comparator = PoseComparator()
     print("✅ PoseComparator initialized successfully")
     print(f"📐 Available joints: {len(comparator.JOINTS)}")
-    
+
     # Show available joints
     print("\n📋 Available joints for analysis:")
     for i, joint_name in enumerate(comparator.JOINTS.keys(), 1):
         print(f"   {i:2d}. {joint_name.replace('_', ' ').title()}")
-        
+
 except Exception as e:
     print(f"❌ Error initializing PoseComparator: {e}")
 
@@ -59,18 +60,18 @@ student_image_path = "path/to/student_pose.jpg"  # UPDATE THIS
 # Check if files exist
 if os.path.exists(teacher_image_path) and os.path.exists(student_image_path):
     print("Loading images...")
-    
+
     # Load images
     teacher_img = comparator.load_image(teacher_image_path)
     student_img = comparator.load_image(student_image_path)
-    
+
     print(f"Teacher image: {teacher_img.shape}")
     print(f"Student image: {student_img.shape}")
-    
+
     # Compare poses
     print("\nDetecting poses and comparing angles...")
     results = comparator.compare_poses(teacher_img, student_img)
-    
+
     # Display results
     print("\n📐 Joint Angle Comparisons:")
     print("-" * 60)
@@ -80,28 +81,28 @@ if os.path.exists(teacher_image_path) and os.path.exists(student_image_path):
             student_angle = diff_data['student_angle']
             difference = diff_data['difference']
             abs_diff = diff_data['absolute_diff']
-            
+
             status = "✅" if abs_diff <= 10.0 else "🔴"
             print(f"{status} {joint_name.replace('_', ' ').title()}:")
             print(f"   Teacher: {teacher_angle:.1f}° | Student: {student_angle:.1f}° | Diff: {difference:+.1f}°")
-    
+
     # Generate feedback
     print("\n💡 Coaching Feedback:")
     print("-" * 60)
     feedback = comparator.generate_feedback(results['angle_differences'])
     for message in feedback:
         print(message)
-    
+
     # Summary
     total_joints = len(results['angle_differences'])
-    good_joints = sum(1 for diff_data in results['angle_differences'].values() 
+    good_joints = sum(1 for diff_data in results['angle_differences'].values()
                      if diff_data is not None and diff_data['absolute_diff'] <= 10.0)
-    
-    print(f"\n📈 Summary:")
+
+    print("\n📈 Summary:")
     print(f"Total joints analyzed: {total_joints}")
     print(f"Joints with good form: {good_joints}")
     print(f"Form accuracy: {good_joints/total_joints*100:.1f}%")
-    
+
 else:
     print("❌ Image files not found. Please update the paths above with your actual image files.")
     print("\nExample usage:")
@@ -115,13 +116,13 @@ else:
 # Example: Create visualization
 if 'results' in locals():
     print("Creating side-by-side visualization...")
-    
+
     # Create visualization
     combined = comparator.visualize_comparison(
         teacher_img, student_img,
         results['teacher_landmarks'], results['student_landmarks']
     )
-    
+
     # Display the combined image
     plt.figure(figsize=(15, 8))
     plt.imshow(cv2.cvtColor(combined, cv2.COLOR_BGR2RGB))
@@ -129,7 +130,7 @@ if 'results' in locals():
     plt.axis('off')
     plt.tight_layout()
     plt.show()
-    
+
     # Optionally save the visualization
     # cv2.imwrite('pose_comparison.png', combined)
     # print("Visualization saved as 'pose_comparison.png'")
@@ -144,10 +145,10 @@ else:
 if 'comparator' in locals():
     print("📐 Available joints for angle analysis:")
     print("-" * 50)
-    
+
     joint_definitions = {
         "elbow_right": "Shoulder-Elbow-Wrist",
-        "elbow_left": "Shoulder-Elbow-Wrist", 
+        "elbow_left": "Shoulder-Elbow-Wrist",
         "shoulder_right": "Hip-Shoulder-Elbow",
         "shoulder_left": "Hip-Shoulder-Elbow",
         "hip_right": "Knee-Hip-Shoulder",
@@ -158,10 +159,10 @@ if 'comparator' in locals():
         "ankle_left": "Knee-Ankle-Foot",
         "torso_tilt": "Left hip-Right hip-Right shoulder"
     }
-    
+
     for i, (joint_name, definition) in enumerate(joint_definitions.items(), 1):
         print(f"{i:2d}. {joint_name.replace('_', ' ').title()}: {definition}")
-        
+
     print("\n💡 Each joint angle is calculated using three landmarks:")
     print("   - Point A: First landmark")
     print("   - Point B: Middle landmark (the joint being measured)")
@@ -197,17 +198,17 @@ try:
     # Test if we can create a simple test image
     test_img = np.zeros((480, 640, 3), dtype=np.uint8)
     test_img[:] = (128, 128, 128)  # Gray background
-    
+
     # Try to detect pose (will likely fail with no person, but tests the setup)
     landmarks = comparator.detect_pose(test_img)
-    
+
     if landmarks is None:
         print("✅ Pose detection working (no pose detected in test image - expected)")
     else:
         print("✅ Pose detection working (pose detected)")
-        
+
     print("✅ All tests passed - module is ready to use!")
-    
+
 except Exception as e:
     print(f"❌ Test failed: {e}")
 
@@ -219,30 +220,30 @@ except Exception as e:
 if 'results' in locals():
     print("🔍 Custom Analysis Example:")
     print("-" * 40)
-    
+
     # Find the joint with the biggest difference
     max_diff_joint = None
     max_diff_value = 0
-    
+
     for joint_name, diff_data in results['angle_differences'].items():
         if diff_data is not None:
             abs_diff = diff_data['absolute_diff']
             if abs_diff > max_diff_value:
                 max_diff_value = abs_diff
                 max_diff_joint = joint_name
-    
+
     if max_diff_joint:
         print(f"Biggest difference: {max_diff_joint.replace('_', ' ').title()} ({max_diff_value:.1f}°)")
-        
+
         # Analyze specific joint
         joint_data = results['angle_differences'][max_diff_joint]
         teacher_angle = joint_data['teacher_angle']
         student_angle = joint_data['student_angle']
         difference = joint_data['difference']
-        
+
         print(f"Teacher angle: {teacher_angle:.1f}°")
         print(f"Student angle: {student_angle:.1f}°")
-        
+
         if difference > 0:
             print(f"Student needs to decrease angle by {difference:.1f}°")
         else:
@@ -252,4 +253,4 @@ else:
 
 # ============================================================================
 # END OF SAMPLE CODE
-# ============================================================================ 
+# ============================================================================
