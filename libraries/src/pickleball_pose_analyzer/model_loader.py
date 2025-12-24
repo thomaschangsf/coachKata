@@ -21,6 +21,7 @@ if sam3d_path not in sys.path:
 try:
     from sam_3d_body import (  # type: ignore[reportMissingImports]
         SAM3DBodyEstimator,
+        load_sam_3d_body,
         load_sam_3d_body_hf,
     )
     from tools.build_detector import HumanDetector  # type: ignore[reportMissingImports]
@@ -47,7 +48,9 @@ def load_sam3d_model(
     Load and initialize SAM 3D Body model.
 
     Args:
-        checkpoint_path: Local path to model checkpoint (optional)
+        checkpoint_path: Local path to model checkpoint file (e.g., "model.ckpt") or
+                         directory containing "model.ckpt" (optional). If provided,
+                         loads from local checkpoint instead of HuggingFace.
         hf_repo_id: HuggingFace repository ID (used if checkpoint_path is None)
         device: "auto", "cuda", or "cpu"
         use_detector: Whether to use human detector
@@ -81,14 +84,56 @@ def load_sam3d_model(
             print("Warning: PyTorch not compiled with CUDA support, falling back to CPU")
             device = "cpu"
 
-    print(f"Loading SAM 3D Body model from {hf_repo_id}...")
     print(f"Using device: {device}")
 
-    # Load core model from HuggingFace
+    # Load core model from local checkpoint or HuggingFace
     if checkpoint_path:
-        # TODO: Implement local checkpoint loading if needed
-        raise NotImplementedError("Local checkpoint loading not yet implemented")
+        print(f"Loading SAM 3D Body model from local checkpoint: {checkpoint_path}")
+
+        # Normalize the checkpoint path
+        checkpoint_path = os.path.abspath(os.path.expanduser(checkpoint_path))
+
+        # If checkpoint_path is a directory, look for model.ckpt inside it
+        if os.path.isdir(checkpoint_path):
+            potential_ckpt = os.path.join(checkpoint_path, "model.ckpt")
+            if os.path.exists(potential_ckpt):
+                checkpoint_path = potential_ckpt
+            else:
+                raise FileNotFoundError(
+                    f"Checkpoint directory provided but 'model.ckpt' not found in: {checkpoint_path}"
+                )
+
+        # Verify checkpoint file exists
+        if not os.path.exists(checkpoint_path):
+            raise FileNotFoundError(f"Checkpoint file not found: {checkpoint_path}")
+
+        # Find MHR model path (usually in assets/mhr_model.pt relative to checkpoint)
+        checkpoint_dir = os.path.dirname(checkpoint_path)
+        mhr_path = os.path.join(checkpoint_dir, "assets", "mhr_model.pt")
+
+        # If not found in assets/, try same directory
+        if not os.path.exists(mhr_path):
+            mhr_path_alt = os.path.join(checkpoint_dir, "mhr_model.pt")
+            if os.path.exists(mhr_path_alt):
+                mhr_path = mhr_path_alt
+            else:
+                # Try parent directory
+                parent_dir = os.path.dirname(checkpoint_dir)
+                mhr_path_alt2 = os.path.join(parent_dir, "assets", "mhr_model.pt")
+                if os.path.exists(mhr_path_alt2):
+                    mhr_path = mhr_path_alt2
+                else:
+                    print("Warning: MHR model not found at expected locations. Continuing without it.")
+                    mhr_path = ""
+
+        # Load model from local checkpoint
+        model, model_cfg = load_sam_3d_body(
+            checkpoint_path=checkpoint_path,
+            mhr_path=mhr_path,
+            device=device,
+        )
     else:
+        print(f"Loading SAM 3D Body model from HuggingFace: {hf_repo_id}")
         model, model_cfg = load_sam_3d_body_hf(hf_repo_id, device=device)
 
     # Initialize optional components
@@ -118,8 +163,12 @@ def load_sam3d_model(
 
     # Create config dictionary
     config = {
-        'hf_repo_id': hf_repo_id,
+        'checkpoint_path': checkpoint_path if checkpoint_path else None,
+        'hf_repo_id': hf_repo_id if not checkpoint_path else None,
         'device': device,
+        'has_detector': human_detector is not None,
+        'has_segmentor': human_segmentor is not None,
+        'has_fov_estimator': fov_estimator is not None,
         'use_detector': use_detector,
         'use_segmentor': use_segmentor,
         'use_fov_estimator': use_fov_estimator,
