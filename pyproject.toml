@@ -227,6 +227,7 @@ DEP003 = [
     "uvicorn",  # Direct dependency (should be in services/inference)
     "fastapi",  # Direct dependency (should be in services/inference)
     "pydantic",  # Direct dependency (should be in services/inference)
+    "yaml",  # Optional dependency (PyYAML), handled with try/except ImportError
 ]
 
 [tool.pyright]

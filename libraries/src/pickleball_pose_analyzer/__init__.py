@@ -53,6 +53,25 @@ from .scoring import (
     score_preparation_position,
 )
 
+# Import Phase 2 comparison module
+try:
+    from .comparison import (
+        ComparisonVisualizer,
+        PoseComparator,
+        generate_feedback,
+        learn_teacher_ranges,
+        load_teacher_ranges,
+    )
+    HAS_COMPARISON = True
+except ImportError:
+    # Graceful handling if comparison module not available
+    HAS_COMPARISON = False
+    import warnings
+    warnings.warn(
+        "Comparison module (Phase 2) not available. Some functions may not work.",
+        stacklevel=2
+    )
+
 __all__ = [
     # Data structures
     'PoseData',
@@ -67,9 +86,20 @@ __all__ = [
     # Keypoint extraction
     'extract_keypoints',
     'calculate_body_center',
-    # Scoring
+    # Scoring (Phase 1)
     'calculate_3d_angle',
     'score_preparation_position',
     'score_contact_position',
     'score_finish_position',
 ]
+
+# Add Phase 2 exports if available
+if HAS_COMPARISON:
+    __all__.extend([
+        # Comparison (Phase 2)
+        'PoseComparator',
+        'learn_teacher_ranges',
+        'load_teacher_ranges',
+        'generate_feedback',
+        'ComparisonVisualizer',
+    ])

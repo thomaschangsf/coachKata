@@ -18,6 +18,13 @@ from .keypoint_extractor import (
     extract_keypoints,
 )
 
+# Import v2 scoring for internal use (backward compatible)
+try:
+    from .comparison.scoring_v2 import score_metric_tolerance
+except ImportError:
+    # Fallback if comparison module not available
+    score_metric_tolerance = None
+
 
 def calculate_3d_angle(
     point_a: np.ndarray,
@@ -47,6 +54,8 @@ def _score_metric(value: float, ideal_min: float, ideal_max: float, tolerance: f
     """
     Score a metric value based on ideal range.
 
+    Uses scoring_v2 internally for consistency with Phase 2.
+
     Args:
         value: Actual value
         ideal_min: Minimum ideal value
@@ -56,6 +65,11 @@ def _score_metric(value: float, ideal_min: float, ideal_max: float, tolerance: f
     Returns:
         Score from 0-100
     """
+    # Use v2 scoring if available, otherwise fallback to original implementation
+    if score_metric_tolerance is not None:
+        return score_metric_tolerance(value, ideal_min, ideal_max, tolerance)
+
+    # Fallback implementation (original code)
     ideal_center = (ideal_min + ideal_max) / 2.0
     ideal_range = ideal_max - ideal_min
     tolerance_range = ideal_range * tolerance
