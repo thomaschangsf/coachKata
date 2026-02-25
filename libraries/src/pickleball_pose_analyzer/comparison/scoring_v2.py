@@ -34,14 +34,16 @@ def score_metric(
             value,
             teacher_range['min'],
             teacher_range['max'],
-            tolerance=scoring_config.get('tolerance', 0.2)
+            tolerance=scoring_config.get('tolerance', 0.2),
+            teacher_mean=teacher_range.get('mean')  # Pass mean for exact match detection
         )
     elif method_type == 'distance':
         return score_metric_distance(
             value,
             teacher_range['min'],
             teacher_range['max'],
-            max_distance=scoring_config.get('max_distance', 0.1)
+            max_distance=scoring_config.get('max_distance', 0.1),
+            teacher_mean=teacher_range.get('mean')  # Pass mean for exact match detection
         )
     elif method_type == 'percentile':
         # Percentile-based scoring requires original teacher values
@@ -51,7 +53,8 @@ def score_metric(
                 value,
                 teacher_range['min'],
                 teacher_range['max'],
-                tolerance=scoring_config.get('tolerance', 0.2)
+                tolerance=scoring_config.get('tolerance', 0.2),
+                teacher_mean=teacher_range.get('mean')
             )
         teacher_values = teacher_range.get('teacher_values')
         if not isinstance(teacher_values, list):
@@ -76,7 +79,8 @@ def score_metric_tolerance(
     value: float,
     range_min: float,
     range_max: float,
-    tolerance: float = 0.2
+    tolerance: float = 0.2,
+    teacher_mean: float | None = None
 ) -> float:
     """
     Score using tolerance-based method (similar to Phase 1 _score_metric).
@@ -91,6 +95,7 @@ def score_metric_tolerance(
         range_min: Minimum of teacher range
         range_max: Maximum of teacher range
         tolerance: Fraction of range to allow outside ideal (0-1)
+        teacher_mean: Optional teacher mean value for exact match detection
 
     Returns:
         Score from 0-100
@@ -101,6 +106,14 @@ def score_metric_tolerance(
 
     # Calculate distance from ideal center
     distance = abs(value - ideal_center)
+
+    # Special case: if teacher_mean is provided and value is very close to it,
+    # give perfect score (handles non-deterministic pose estimation)
+    if teacher_mean is not None:
+        # Use 1% of ideal_range as threshold for "exact match"
+        exact_match_threshold = ideal_range * 0.01
+        if abs(value - teacher_mean) <= exact_match_threshold:
+            return 100.0
 
     # Score based on distance
     if distance <= ideal_range / 2:
@@ -123,7 +136,8 @@ def score_metric_distance(
     value: float,
     range_min: float,
     range_max: float,
-    max_distance: float
+    max_distance: float,
+    teacher_mean: float | None = None
 ) -> float:
     """
     Score using distance-based method.
@@ -138,10 +152,19 @@ def score_metric_distance(
         range_min: Minimum of teacher range
         range_max: Maximum of teacher range
         max_distance: Maximum acceptable distance from range
+        teacher_mean: Optional teacher mean value for exact match detection
 
     Returns:
         Score from 0-100
     """
+    # Special case: if teacher_mean is provided and value is very close to it,
+    # give perfect score (handles non-deterministic pose estimation)
+    if teacher_mean is not None:
+        ideal_range = range_max - range_min
+        exact_match_threshold = ideal_range * 0.01  # 1% of range
+        if abs(value - teacher_mean) <= exact_match_threshold:
+            return 100.0
+
     # Check if value is within range
     if range_min <= value <= range_max:
         return 100.0
